@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navarna Sadhana | Digital Puja</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:ital@1&display=swap');
+        
+        body { margin: 0; background: #0a0000; color: #f3dfa2; font-family: 'Cinzel', serif; overflow: hidden; }
+        canvas { display: block; }
+        .glass { background: rgba(40, 0, 0, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 215, 0, 0.2); }
+        .mantra-text { font-family: 'Lora', serif; letter-spacing: 2px; }
+        .progress-bar { transition: width 0.3s ease; background: linear-gradient(90deg, #800000, #ff0000, #ffd700); }
+    </style>
+</head>
+<body>
+
+    <div class="fixed inset-0 pointer-events-none flex flex-col justify-between p-6 z-10">
+        <header class="flex justify-between items-start pointer-events-auto">
+            <div class="glass p-4 rounded-br-3xl">
+                <h1 class="text-2xl font-bold tracking-[0.2em] text-orange-500">Navarna Sadhana</h1>
+                <p class="text-[10px] uppercase opacity-60">ॐ ऐं ह्रीं क्लीं चामुण्डायै विच्चे</p>
+            </div>
+            
+            <div class="text-right">
+                <div class="glass p-4 rounded-bl-3xl">
+                    <p class="text-[10px] uppercase tracking-widest opacity-70">Mala Progress</p>
+                    <div class="w-48 h-1 bg-black/50 rounded-full mt-2 overflow-hidden">
+                        <div id="progress" class="progress-bar h-full" style="width: 0%"></div>
+                    </div>
+                    <p class="text-2xl mt-1"><span id="counter" class="font-bold text-yellow-500">0</span> <span class="text-sm opacity-50">/ 108</span></p>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex flex-col items-center mb-12 pointer-events-auto">
+            <div id="mantra-display" class="mantra-text text-xl md:text-2xl text-center mb-8 text-orange-200 opacity-80 italic px-4">
+                "Aim Hrīm Klīm Chāmundāyai Vicce"
+            </div>
+            
+            <div class="flex gap-4">
+                <button onclick="performJapa()" class="glass px-12 py-5 rounded-full hover:border-orange-500 transition-all active:scale-95 group relative overflow-hidden">
+                    <div class="absolute inset-0 bg-orange-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <span class="relative z-10 text-lg tracking-widest">CHANT</span>
+                </button>
+                
+                <button onclick="resetMala()" class="glass p-5 rounded-full hover:bg-red-900/20 transition-all opacity-40 hover:opacity-100">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                </button>
+            </div>
+            <p class="text-[9px] mt-4 opacity-40 uppercase tracking-[0.3em]">Press Space to count</p>
+        </div>
+    </div>
+
+    <div id="container"></div>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        let scene, camera, renderer, light, core;
+        let count = 0;
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x050000);
+            scene.fog = new THREE.FogExp2(0x050000, 0.1);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1, 4);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.toneMapping = THREE.ReinhardToneMapping;
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            // Ambience
+            scene.add(new THREE.AmbientLight(0x200000, 1));
+
+            // Central Divine Energy (The Core)
+            const coreGeo = new THREE.IcosahedronGeometry(0.8, 15);
+            const coreMat = new THREE.MeshStandardMaterial({ 
+                color: 0xff3300, 
+                emissive: 0xff0000,
+                emissiveIntensity: 2,
+                wireframe: true 
+            });
+            core = new THREE.Mesh(coreGeo, coreMat);
+            core.position.y = 1.2;
+            scene.add(core);
+
+            // Light from the Core
+            light = new THREE.PointLight(0xff4400, 3, 10);
+            light.position.set(0, 1.2, 1);
+            scene.add(light);
+
+            // Floor with reflection
+            const floorGeo = new THREE.PlaneGeometry(20, 20);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.1, metalness: 0.5 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            scene.add(floor);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = Date.now() * 0.001;
+            
+            // Core Animation
+            core.rotation.y += 0.005;
+            core.rotation.z += 0.003;
+            core.scale.setScalar(1 + Math.sin(t * 2) * 0.05);
+            
+            // Flickering light
+            light.intensity = 2 + Math.random() * 0.5;
+            
+            renderer.render(scene, camera);
+        }
+
+        // Logical Functions
+        window.performJapa = () => {
+            if (count < 108) {
+                count++;
+                updateUI();
+                
+                // Visual Pulse
+                core.scale.setScalar(1.5);
+                setTimeout(() => core.scale.setScalar(1), 100);
+                
+                // Audio would go here: new Audio('bell.mp3').play();
+            } else {
+                alert("Mala Completed. Om Shanti.");
+            }
+        };
+
+        window.resetMala = () => {
+            if(confirm("Reset current mala count?")) {
+                count = 0;
+                updateUI();
+            }
+        };
+
+        function updateUI() {
+            document.getElementById('counter').innerText = count;
+            document.getElementById('progress').style.width = (count / 108 * 100) + "%";
+        }
+
+        window.addEventListener('keydown', (e) => { if(e.code === 'Space') performJapa(); });
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
